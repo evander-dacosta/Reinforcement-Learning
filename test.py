@@ -9,7 +9,7 @@ from environment import Environment
 
 class GridWorld1d(Environment):
     """
-    Simulates a 1D gridworld.
+    Simulates a 1D gridworld .
     States that are not terminal have -1 score
     States that are terminal have 1 score
     """
