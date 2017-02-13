@@ -5,75 +5,81 @@ Created on Mon Feb 13 16:56:14 2017
 @author: Evander
 """
 import numpy
+import numpy.random
 from environment import Environment
 
-class GridWorld1d(Environment):
+
+class GridWorldAgent(object):
     """
-    Simulates a 1D gridworld .
-    States that are not terminal have -1 score
-    States that are terminal have 1 score
+    The GridWorldAgent has it's own internal representation 
+    of:
+    Policy function p(action|state)
+    Value function V(state)
+    
+    Methods
+    -------
+    get_action(state): Gets the action according to current policy
+    get_value(state): Gets the value according to current state
+    initialise_policy(): Initialises the agent's action policy
+    initialise_values(): Initialises the agent's value function
+    evaluate_policy(num_iters): Evaluates the agent's policy and updates the internal
+                        representation of environment's value
+    update_policy(): Update's the agent's policy based on greedy methods
+    iteration_step(): A single iteration step on the Value Iteration method
     """
-    def __init__(self, grid_length):
+    
+    def __init__(self, grid_world, gamma=0.4):
+        self.grid_world = grid_world
+        self.gamma = gamma
+        self.policy = self.initialise_policy()
+        self.values = self.initialise_values()
+        
+        
+    def initialise_policy(self):
         """
-        Initialise the grid.
-        In this object, the grid is represented as an array of scores.
-        The state of the environment is the index of the array it's in.
+        Initialise by making agent go right all the time
         """
-        self.grid_length = grid_length
+        policy = numpy.zeros(shape=(self.grid_world.grid_length, 2))
+        policy[1:-1, :] = 0.5
+        return policy
         
-        self.grid = numpy.ones((grid_length,)) * -1.
-        self.grid[[0, -1]] = 1.
-        
-        
-        self.actions = {'a':-1, 'd':1}
-        self.reset()
-        
-    def translate_action(self, action):
+    def initialise_values(self):
         """
-        Working with a for left and d for right
+        Initialise with zero values for all states
         """
-        return self.actions[action]
+        return numpy.zeros((self.grid_world.grid_length,))
         
+    def get_action(self, state):
+        if(state == 0 or state ==self.grid_world.grid.shape[0] - 1):
+            return 't'
+        choices = self.policy[state]
+        action = numpy.random.choice(['a', 'd'], 1, p=choices)
+        return action[0]
         
-    def action(self, action):
-        if(not action in self.actions.keys()):
-            raise Exception("Unknown action taken")
-        action = self.translate_action(action)
-        current_state = self.state
-        new_state = self.evolve_state(current_state, action)
-        reward = self.get_reward(current_state, action, new_state)
-        return reward, new_state
-        
-        
-    def evolve_state(self, state, action):
-        if(self.game_ended):
-            raise Exception("Action played on an ended game. Reset.")
-        new_state = state + action
-        self.state = new_state
-        if(self.state == 0 or self.state == self.grid.shape[0] - 1):
-            #End the game
-            self.game_ended = True
-        return new_state
-        
-        
-    def get_state(self):
-        return self.state
-        
-    def get_reward(self, current_state, action, next_state):
-        return self.grid[self.state]
-        
-    def reset(self):
-        self.state = numpy.random.randint(0, high=self.grid_length)
-        self.game_ended = False
-        
-    def __repr__(self):
-        rep = ['_']*self.grid_length
-        rep[self.state] = 'X'
-        return str(rep)
+    
+    def evaluate_policy(self, num_iters=1):
+        for iter in range(num_iters):
+            for s in range(len(self.grid_world.grid)):
+                a = self.get_action(s)
+                s_prime = self.grid_world.evolve_state(s, a)
+                reward = self.grid_world.get_reward(s, a, s_prime)
+                if(s_prime is None):
+                    future_reward = 0
+                else:
+                    future_reward = self.values[s_prime]
+                self.values[s] = reward + (self.gamma * future_reward )
+    
+    def update_policy(self):
+        pass
+    
+    def iteration_step(self):
+        pass
+
 
 if __name__ == "__main__":
-    g = GridWorld1d(5)
-    while(not g.game_ended):
-        action = raw_input()
-        g.action(action)
-        print g
+    from gridworld import GridWorld1d
+    g = GridWorld1d(7)
+    agent = GridWorldAgent(g)
+    agent.evaluate_policy(100)
+    print agent.values
+    

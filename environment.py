@@ -14,7 +14,10 @@ class Environment(object):
     -------
     translate_action(): Translates from agent's language of actions to 
                         environment's language of actions
-    action(action): Take a certain action
+    action(state, action): Returns reward and next state for taking an action
+                            in a given state
+    take_action(action): Like action, except the environment actually does
+                        evolve its internal states.
     get_state(): Returns the current state of the environment
     evolve_state(current_state, action): Evolves the current state of the
                                          environment
@@ -38,9 +41,24 @@ class Environment(object):
         """
         raise NotImplementedError()
     
-    def action(self, action):
+    def action(self, state, action):
         """
-        Take an action
+        Get the reward and next state for taking action in a given state
+        
+        Inputs
+        ------
+        @param state: State of the environment
+        @param action: The action to be taken
+        
+        Returns
+        -------
+        reward, new_state
+        """
+        raise NotImplementedError()
+    
+    def take_action(self, action):
+        """
+        Take an action, update internal state
         
         Inputs
         ------
@@ -52,7 +70,7 @@ class Environment(object):
         """
         raise NotImplementedError()
     
-    def evolve_state(self, current_state, action):
+    def evolve_state(self, current_state, action, update_internal):
         """
         Evolve the internal state of the environment
         
