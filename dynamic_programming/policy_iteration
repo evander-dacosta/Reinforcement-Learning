@@ -1,0 +1,61 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Feb 18 11:49:54 2017
+
+@author: evander
+"""
+
+import numpy
+import sys
+if("../") not in sys.path:
+    sys.path.append("../")
+from envs.gridworld import GridWorld
+from dynamic_programming import policy_evaluation
+
+
+env = GridWorld((4,4))
+
+
+def policy_iteration(env, policy_eval_fn=policy_evaluation, discount_gamma=1.):
+    """
+    Implements Policy iteration. Policy evaluation is already implemented
+    so no need to reimplement that.
+    
+    Inputs
+    ------
+        @param env: OpenAi gym environment
+        @param policy_eval_fn: A function that does policy evaluation
+        @param discount_gamma: discount factor
+    Returns
+    -------
+        tuple (policy, value) for the optimal policy and value
+        policy is a S x A matrix of action probabilities
+        value is a S X 1 array of values for each state
+    """
+    #start with uniform random policy
+    policy = numpy.ones((env.nS, env.nA)) / env.nA
+    
+    while True:
+        V = policy_eval_fn(policy, env, discount_gamma)
+        policy_stable = True
+        for s in numpy.arange(env.nS):
+            temp = numpy.argmax(policy[s])
+            actions = numpy.zeros(env.nA)
+            for a in numpy.arange(actions.shape[0]):
+                for transition_prob, next_state, reward, done in env.T[s][a]:
+                    actions[a] = transition_prob * (reward + \
+                                            (discount_gamma * V[next_state]))
+            best_action = numpy.argmax(actions)
+            
+            if(temp != best_action):
+                policy_stable = False
+            policy[s] = numpy.eye(env.nA)[best_action]
+            
+        if(policy_stable):
+            return (policy, V)
+    
+if __name__ == "__main__":
+    policy, v = policy_iteration(env)
+    print "Policy (0=up, 1=down, 2=left, 3=right"
+    print numpy.reshape(numpy.argmax(policy, axis=1), env.shape)
